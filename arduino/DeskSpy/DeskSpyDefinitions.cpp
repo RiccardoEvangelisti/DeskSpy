@@ -1,0 +1,165 @@
+#include "DeskSpyDefinitions.h"
+
+// --------------------------------------------------------------------------------
+// Time variables
+DS3231 clock;
+
+// --------------------------------------------------------------------------------
+// Camera constants and functions
+const uint8_t lineLength = 160;
+const uint8_t lineCount = 120;
+const uint32_t baud = 1000000; // 1Mbps: communication speed
+uint8_t lineBuffer[lineLength];
+CameraOV7670 camera;
+
+// --------------------------------------------------------------------------------
+
+void initialize() {
+  Serial.begin(baud);
+  camera.init();
+  clock.begin(); // Initialize DS3231
+}
+
+void takeAndSendFrame() {
+  waitUntilPreviousUartByteIsSent();
+  UDR0 = 0x00; // START FRAME COMMAND
+
+  noInterrupts();
+  camera.waitForVsync();
+  camera.ignoreVerticalPadding();
+
+  for (uint16_t y = 0; y < lineCount; y++) {
+    camera.ignoreHorizontalPaddingLeft();
+
+    uint16_t x = 0;
+    while (x < lineLength) {
+      camera.waitForPixelClockRisingEdge(); // YUV422 grayscale byte: Y1
+      camera.readPixelByte(lineBuffer[x]);
+
+      camera.waitForPixelClockRisingEdge(); // YUV422 color byte. Ignore: U
+      x++;
+
+      camera.waitForPixelClockRisingEdge(); // YUV422 grayscale byte: Y2
+      camera.readPixelByte(lineBuffer[x]);
+
+      camera.waitForPixelClockRisingEdge(); // YUV422 color byte. Ignore: V
+      x++;
+    }
+    camera.ignoreHorizontalPaddingRight();
+
+    // Send the line
+    for (uint16_t i = 0; i < x; i++) {
+      waitUntilPreviousUartByteIsSent();
+      if (lineBuffer[i] == 0b00000000) {
+        lineBuffer[i] = 0b00000001; // Because 0x00 is the START FRAME COMMAND
+      }
+      UDR0 = lineBuffer[i];
+    }
+  }
+  interrupts();
+  waitUntilPreviousUartByteIsSent();
+}
+
+void waitUntilPreviousUartByteIsSent() {
+  while (!isUartReady()); // wait for byte to transmit
+}
+
+bool isUartReady() { return UCSR0A & (1 << UDRE0); }
+
+// --------------------------------------------------------------------------------
+
+// Reset leds, buzz, buffer.
+// Waits for next connection
+void reset() {
+  turnOff(led_warning);
+  turnOff(led_break);
+  turnOff(led_work);
+  turnOff(buzzer);
+
+  clearReciveBuffer();
+  // Sync with server
+  Serial.write(1);
+  // Wait the Ack
+  while(!Serial.available());
+}
+
+// --------------------------------------------------------------------------------
+// Utility funcions
+
+uint32_t getActualTime() { return clock.getDateTime().unixtime; }
+
+int minsToSecs(int mins) { return mins * 60; }
+
+int secsToMillis(int secs) { return secs * 1000; }
+
+// Serial read blocking, to sync with the server
+// WARNING: it may cause deadlock!
+int serialReadBlocking() {
+  /*int defaultTimeout = Serial.getTimeout();
+  Serial.setTimeout(30000); // 30 seconds
+  int ret;
+  if (Serial.available() > 0) {
+    ret = Serial.read();
+  }
+  Serial.setTimeout(defaultTimeout); // default: 1 sec
+  return ret;*/
+  /*uint32_t startTime = getActualTime();
+  while((!Serial.available()) && (getActualTime() - startTime <= 30));
+  return Serial.read();*/
+  while(!Serial.available());
+  return Serial.read();
+}
+
+// Clear the receive buffer
+void clearReciveBuffer() {
+  while(Serial.available()){
+    Serial.read();
+  }
+}
+
+
+// --------------------------------------------------------------------------------
+// Digital pins interactions
+
+// Turn On pin
+void turnOn(uint8_t pin) {
+  digitalWrite(pin, HIGH);
+}
+// Turn Off pin
+void turnOff(uint8_t pin) {
+  digitalWrite(pin, LOW);
+}
+
+// Buzz the buzzer for "secs" seconds
+void buzz(int secs) {
+  digitalWrite(buzzer, HIGH);
+  delay(secsToMillis(secs));
+  digitalWrite(buzzer, LOW);
+}
+
+void blink(int pin, int secs, int state) {
+  blink(pin, secs, state, 0);
+}
+
+// Blink the led "pin" for "secs" seconds with initial "state"
+void blink(int pin, int secs, int state, uint8_t snoozeAvailable) {
+  for (int i = 0; i < secs; i++) {
+    digitalWrite(pin, !state);
+    state = !state;
+    delay(1000);
+    if ((snoozeAvailable > 0) && (pin == led_break)) {
+      if (digitalRead(button_snooze) == HIGH) {
+        snoozeState();
+      }
+    }
+  }
+  turnOn(pin); // always end HIGH
+}
+
+void warningBlinkAndBuzz() {
+  turnOn(buzzer);
+  turnOff(led_warning);
+  delay(200);
+  turnOff(buzzer);
+  turnOn(led_warning);
+}
