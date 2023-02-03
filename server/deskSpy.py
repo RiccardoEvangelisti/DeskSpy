@@ -16,6 +16,9 @@ PRINT = True
 # If the image is to be displayed when received
 DISPLAY = True
 
+# If the terminal and the camera display are TOPMOST over other windows
+TOPMOST = False
+
 # If the user's face is to be recognized or only detected
 RECOGNITION = True
 
@@ -52,7 +55,7 @@ if PRINT:
     screen_width = win32api.GetSystemMetrics(0)
     screen_height = win32api.GetSystemMetrics(1)
     win32gui.SetWindowPos(
-        hwnd, win32con.HWND_TOPMOST, screen_width - width - 50, 300, width, height, 0
+        hwnd, win32con.HWND_TOPMOST if TOPMOST else win32con.HWND_TOP, screen_width - width - 50, 300, width, height, 0
     )
     os.system("title DeskSpy")
     os.system("mode con: cols=30 lines=10")
@@ -110,7 +113,8 @@ while True:
         img_array = np.array(Image.fromarray(img_array, "L"))
         if DISPLAY:
             cv2.namedWindow("camera", cv2.WINDOW_NORMAL)
-            cv2.setWindowProperty("camera", cv2.WND_PROP_TOPMOST, 1)
+            if TOPMOST:
+                cv2.setWindowProperty("camera", cv2.WND_PROP_TOPMOST, 1)
             cv2.imshow("camera", img_array)
             cv2.waitKey(1)
         # Detect faces
