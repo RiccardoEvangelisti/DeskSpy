@@ -77,8 +77,9 @@ uint32_t workState(int early_work) {
             resetFunc();
         }
         actualTime = getActualTime();
-      } while (!detected && (actualTime - startWarningTime <= minsToSecs(maxAbsenceTime)) && //
-               (actualTime - startTime <= minsToSecs(workTime) - early_work)); // if the break starts anyway
+      } while ((!detected) && //
+                ((actualTime - startWarningTime) <= ((uint32_t) minsToSecs(maxAbsenceTime))) && //
+                ((actualTime - startTime) <= (((uint32_t) minsToSecs(workTime)) - early_work))); // if the break starts anyway
       turnOff(led_warning);
       if (!detected) {
         // EARLY BREAK
@@ -90,7 +91,7 @@ uint32_t workState(int early_work) {
       break;
     }
     delay(secsToMillis(captureFrequency_workDetected));
-  } while (getActualTime() - startTime <= minsToSecs(workTime) - early_work);
+  } while ((getActualTime() - startTime) <= (((uint32_t) minsToSecs(workTime)) - early_work));
 
   return 0; //early_break = 0
 }
@@ -99,8 +100,7 @@ void snoozeState() {
   snoozeAvailable--;
   turnOn(led_break);
   turnOn(led_work);
-  unsigned long var = snoozeTime*60;
-  delay(var*1000);
+  delay(minsToMillis(snoozeTime));
   turnOff(led_work);
 }
 
@@ -132,8 +132,9 @@ int breakState(int early_break) {
             resetFunc();
         }
         actualTime = getActualTime();
-      } while (detected && (actualTime - startWarningTime <= minsToSecs(maxPresenceTime)) && //
-                (actualTime - startTime <= minsToSecs(breakTime) - early_break)); // if the work starts anyway
+      } while (detected && //
+                ((actualTime - startWarningTime) <= ((uint32_t) minsToSecs(maxPresenceTime))) && //
+                ((actualTime - startTime) <= (((uint32_t) minsToSecs(breakTime)) - early_break))); // if the work starts anyway
       turnOff(led_warning);
       if (detected) {
         // EARLY WORK
@@ -145,7 +146,7 @@ int breakState(int early_break) {
       break;
     }
     delay(secsToMillis(captureFrequency_breakNotDetected));
-  } while (getActualTime() - startTime <= minsToSecs(breakTime) - early_break);
+  } while ((getActualTime() - startTime) <= (((uint32_t) minsToSecs(breakTime)) - early_break));
 
   return 0; //early_work = 0
 }

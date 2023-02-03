@@ -88,9 +88,11 @@ void reset() {
 
 uint32_t getActualTime() { return clock.getDateTime().unixtime; }
 
-int minsToSecs(int mins) { return mins * 60; }
+unsigned long minsToMillis(int mins) { return ((unsigned long) mins) * 60L * 1000L; }
 
-int secsToMillis(int secs) { return secs * 1000; }
+unsigned long minsToSecs(int mins) { return ((unsigned long) mins) * 60L; }
+
+unsigned long secsToMillis(int secs) { return ((unsigned long) secs) * 1000L; }
 
 // Serial read blocking, to sync with the server
 // WARNING: it may cause deadlock!

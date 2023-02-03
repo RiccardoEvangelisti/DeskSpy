@@ -19,7 +19,7 @@
 #ifdef DS_DEBUG
 
   #define prepareForWorkTime 5 //seconds
-  #define workTime 1 //minutes
+  #define workTime 2 //minutes
 
   #define prepareForBreakTime 5 //seconds
   #define breakTime 1 //minutes
@@ -80,8 +80,9 @@ void reset();
 
 uint32_t getActualTime();
 
-int minsToSecs(int mins);
-int secsToMillis(int secs);
+unsigned long minsToMillis(int mins);
+unsigned long minsToSecs(int mins);
+unsigned long secsToMillis(int secs);
 
 int serialReadBlocking();
 
