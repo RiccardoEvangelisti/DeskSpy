@@ -49,7 +49,7 @@ void loop() {
   turnOff(led_break);
 }
 
-uint32_t workState(int early_work) {
+uint32_t workState(uint32_t early_work) {
   clearReciveBuffer();
   startTime = getActualTime();
   do {
@@ -86,9 +86,9 @@ uint32_t workState(int early_work) {
         return getActualTime() - startWarningTime;
       }
       break;
-    default:
+    //default:
       //
-      break;
+      //break;
     }
     delay(secsToMillis(captureFrequency_workDetected));
   } while ((getActualTime() - startTime) <= (((uint32_t) minsToSecs(workTime)) - early_work));
@@ -104,7 +104,7 @@ void snoozeState() {
   turnOff(led_work);
 }
 
-int breakState(int early_break) {
+uint32_t breakState(uint32_t early_break) {
   clearReciveBuffer();
   startTime = getActualTime();
   do {
