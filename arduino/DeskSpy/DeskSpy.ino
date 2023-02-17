@@ -86,9 +86,9 @@ uint32_t workState(uint32_t early_work) {
         return getActualTime() - startWarningTime;
       }
       break;
-    //default:
+    default:
       //
-      //break;
+      break;
     }
     delay(secsToMillis(captureFrequency_workDetected));
   } while ((getActualTime() - startTime) <= (((uint32_t) minsToSecs(workTime)) - early_work));

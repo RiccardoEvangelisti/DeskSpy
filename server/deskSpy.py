@@ -67,7 +67,7 @@ else:
 ser = serial.Serial(
     "COM5",
     1000000,
-    timeout=2000,
+    timeout=None,
     parity=serial.PARITY_NONE,
     stopbits=serial.STOPBITS_ONE,
     bytesize=serial.EIGHTBITS,
@@ -91,9 +91,12 @@ buffer = bytearray()
 result = -1
 
 # Wait the Syn from the client
-byte = ser.read(1)
+while ser.read(1) != b's':
+    pass
 # Send the Ack
 ser.write(b"a")
+
+printTerminal("-- SYNCED --")
 
 # Read first byte
 byte = ser.read(1)

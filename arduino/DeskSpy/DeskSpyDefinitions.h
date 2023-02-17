@@ -99,6 +99,7 @@ void buzz(int secs);
 void blink(int pin, int secs, int state);
 void blink(int pin, int secs, int state, uint8_t snoozeAvailable);
 
+void warningBlink();
 void warningBlinkAndBuzz();
 
 

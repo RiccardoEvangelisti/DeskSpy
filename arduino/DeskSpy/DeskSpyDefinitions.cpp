@@ -12,6 +12,8 @@ const uint32_t baud = 1000000; // 1Mbps: communication speed
 uint8_t lineBuffer[lineLength];
 CameraOV7670 camera;
 
+uint32_t previous_time = 0;
+
 // --------------------------------------------------------------------------------
 
 void initialize() {
@@ -78,15 +80,22 @@ void reset() {
 
   clearReciveBuffer();
   // Sync with server
-  Serial.write(1);
+  Serial.write("s");
   // Wait the Ack
-  while(!Serial.available());
+  while(!Serial.available() && Serial.read() != "a");
 }
 
 // --------------------------------------------------------------------------------
 // Utility funcions
 
-uint32_t getActualTime() { return clock.getDateTime().unixtime; }
+uint32_t getActualTime() {
+  uint32_t actual_time = clock.getDateTime().unixtime;
+  if((actual_time - previous_time) >= 60) { // if RTC clock is over, due to a probable error
+    return previous_time;
+  }
+  previous_time = actual_time;
+  return previous_time;
+}
 
 unsigned long minsToMillis(int mins) { return ((unsigned long) mins) * 60L * 1000L; }
 
@@ -97,19 +106,19 @@ unsigned long secsToMillis(int secs) { return ((unsigned long) secs) * 1000L; }
 // Serial read blocking, to sync with the server
 // WARNING: it may cause deadlock!
 int serialReadBlocking() {
-  /*int defaultTimeout = Serial.getTimeout();
   Serial.setTimeout(30000); // 30 seconds
-  int ret;
-  if (Serial.available() > 0) {
-    ret = Serial.read();
+  char byteRead[1];
+  int ret = Serial.readBytes(byteRead, 1);
+  if (ret == 0) {
+    return 0;
+  } else {
+    return byteRead[0];
   }
-  Serial.setTimeout(defaultTimeout); // default: 1 sec
-  return ret;*/
   /*uint32_t startTime = getActualTime();
   while((!Serial.available()) && (getActualTime() - startTime <= 30));
   return Serial.read();*/
-  while(!Serial.available());
-  return Serial.read();
+  /*while(!Serial.available());
+  return Serial.read();*/
 }
 
 // Clear the receive buffer
@@ -156,6 +165,12 @@ void blink(int pin, int secs, int state, uint8_t snoozeAvailable) {
     }
   }
   turnOn(pin); // always end HIGH
+}
+
+void warningBlink() {
+  turnOff(led_warning);
+  delay(200);
+  turnOn(led_warning);
 }
 
 void warningBlinkAndBuzz() {
