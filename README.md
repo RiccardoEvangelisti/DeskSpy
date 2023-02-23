@@ -5,6 +5,9 @@ DeskSpy is an Arduino-based project which helps the user to take a break every h
   <img src="./doc/pictures/DeskSpyPicture.png" width="500"/>
 </p>
 
+## Real Time Video Example
+https://www.youtube.com/watch?v=nMDWoYeMBm0
+
 ## Circuit Diagrams
 <img src="./doc/pictures/CircuitDiagram1.png" width="500">
 <img src="./doc/pictures/CircuitDiagram2.png" width="500">
