@@ -14,7 +14,7 @@ import win32api
 PRINT = True
 
 # If the image is to be displayed when received
-DISPLAY = False
+DISPLAY = True
 
 # If the terminal and the camera display are TOPMOST over other windows
 TOPMOST = False
@@ -28,7 +28,6 @@ WIDTH = 160
 HEIGHT = 120
 
 START_COMMAND = b"\x00"
-RESET_COMMAND = b"1"
 DETECTED_COMMAND = b"2"
 RECOGNIZED_COMMAND = DETECTED_COMMAND
 NOT_DETECTED_COMMAND = b"3"
@@ -42,7 +41,7 @@ def printTerminal(string):
 
 
 def terminationHandler(signum, frame):
-    ser.write(RESET_COMMAND)
+    ser.write(b"2")  # Reset
     printTerminal("-- EXIT --")
     exit(1)
 
@@ -56,7 +55,13 @@ if PRINT:
     screen_width = win32api.GetSystemMetrics(0)
     screen_height = win32api.GetSystemMetrics(1)
     win32gui.SetWindowPos(
-        hwnd, win32con.HWND_TOPMOST if TOPMOST else win32con.HWND_TOP, screen_width - width - 50, 300, width, height, 0
+        hwnd,
+        win32con.HWND_TOPMOST if TOPMOST else win32con.HWND_TOP,
+        screen_width - width - 50,
+        300,
+        width,
+        height,
+        0,
     )
     os.system("title DeskSpy")
     os.system("mode con: cols=30 lines=10")
@@ -92,7 +97,7 @@ buffer = bytearray()
 result = -1
 
 # Wait the Syn from the client
-while ser.read(1) != b's':
+while ser.read(1) != b"s":
     pass
 # Send the Ack
 ser.write(b"a")
@@ -115,38 +120,9 @@ while True:
         img_array = np.array(buffer).reshape(HEIGHT, WIDTH)
         # Convert the array to a grayscale image
         img_array = np.array(Image.fromarray(img_array, "L"))
-        if DISPLAY:
-            cv2.namedWindow("camera", cv2.WINDOW_AUTOSIZE)
-            if TOPMOST:
-                cv2.setWindowProperty("camera", cv2.WND_PROP_TOPMOST, 1)
-            cv2.imshow("camera", img_array)
-            cv2.waitKey(1)
-        # Detect faces
-        faces = face_detector.detectMultiScale(
-            img_array, scaleFactor=1.05, minNeighbors=3
-        )
-        clock = time.strftime("%H:%M:%S", time.localtime())
-        if len(faces) > 0:
-            if RECOGNITION:
-                # Recognize the faces in trained data
-                recognized = False
-                for (x, y, w, h) in faces:
-                    ID, conf = face_recognizer.predict(img_array[y : y + h, x : x + w])
-                    if conf >= 20 and conf <= 115:
-                        recognized = True
-                        break
-                if recognized:
-                    printTerminal(clock + " Face recognized, ID: " + labels[ID])
-                    result = RECOGNIZED_COMMAND
-                else:
-                    printTerminal(clock + " Face not recognized")
-                    result = NOT_RECOGNIZED_COMMAND
-            else:
-                printTerminal(clock + " Face detected")
-                result = DETECTED_COMMAND
-        else:
-            printTerminal(clock + " No face detected")
-            result = NOT_DETECTED_COMMAND
+        clock = time.strftime("%H_%M_%S", time.localtime())
+        cv2.imwrite("./temp/" + clock + ".png", img_array)
+        result = NOT_DETECTED_COMMAND
         ser.write(result)
         # Clear the buffer
         buffer = bytearray()

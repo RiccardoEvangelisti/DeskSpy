@@ -12,10 +12,17 @@ const uint32_t baud = 1000000; // 1Mbps: communication speed
 uint8_t lineBuffer[lineLength];
 CameraOV7670 camera;
 
+uint32_t previous_time = 0;
+
+char byteRead[1];
+int ret;
+
 // --------------------------------------------------------------------------------
 
 void initialize() {
   Serial.begin(baud);
+  while(!Serial);
+  Serial.setTimeout(10000); // 10 seconds
   camera.init();
   clock.begin(); // Initialize DS3231
 }
@@ -58,6 +65,7 @@ void takeAndSendFrame() {
   }
   interrupts();
   waitUntilPreviousUartByteIsSent();
+  Serial.flush();
 }
 
 void waitUntilPreviousUartByteIsSent() {
@@ -78,15 +86,24 @@ void reset() {
 
   clearReciveBuffer();
   // Sync with server
-  Serial.write(1);
+  Serial.write("s");
   // Wait the Ack
-  while(!Serial.available());
+  turnOn(led_warning);
+  while(Serial.read() != 'a');
+  turnOff(led_warning);
 }
 
 // --------------------------------------------------------------------------------
 // Utility funcions
 
-uint32_t getActualTime() { return clock.getDateTime().unixtime; }
+uint32_t getActualTime() {
+  uint32_t actual_time = clock.getDateTime().unixtime;
+  if(((actual_time - previous_time) >= 100) && (previous_time != 0)) { // this prevents RTC errors
+    return previous_time;
+  }
+  previous_time = actual_time;
+  return previous_time;
+}
 
 unsigned long minsToMillis(int mins) { return ((unsigned long) mins) * 60L * 1000L; }
 
@@ -95,21 +112,25 @@ unsigned long minsToSecs(int mins) { return ((unsigned long) mins) * 60L; }
 unsigned long secsToMillis(int secs) { return ((unsigned long) secs) * 1000L; }
 
 // Serial read blocking, to sync with the server
-// WARNING: it may cause deadlock!
-int serialReadBlocking() {
-  /*int defaultTimeout = Serial.getTimeout();
-  Serial.setTimeout(30000); // 30 seconds
-  int ret;
+char serialReadBlocking() {
+  /*
+  // WARNING: it may cause deadlock!
+  Serial.setTimeout(10000); // 10 seconds
+  delay(100); // wait 1 second to set up the timer
+  ret = 0;
+  byteRead[0] = '0';
+  ret = Serial.readBytes(byteRead, 1);
+  if (ret == 0) {
+    return '0';
+  } else {
+    return byteRead[0];
+  }*/
+  delay(500);
   if (Serial.available() > 0) {
-    ret = Serial.read();
+    return Serial.read();
+  } else {
+    return '0';
   }
-  Serial.setTimeout(defaultTimeout); // default: 1 sec
-  return ret;*/
-  /*uint32_t startTime = getActualTime();
-  while((!Serial.available()) && (getActualTime() - startTime <= 30));
-  return Serial.read();*/
-  while(!Serial.available());
-  return Serial.read();
 }
 
 // Clear the receive buffer
@@ -156,6 +177,12 @@ void blink(int pin, int secs, int state, uint8_t snoozeAvailable) {
     }
   }
   turnOn(pin); // always end HIGH
+}
+
+void warningBlink() {
+  turnOff(led_warning);
+  delay(200);
+  turnOn(led_warning);
 }
 
 void warningBlinkAndBuzz() {
