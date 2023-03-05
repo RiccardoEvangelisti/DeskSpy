@@ -87,9 +87,9 @@ uint32_t workState(uint32_t early_work) {
       }
       break;
     default:
-      //
       break;
     }
+    Serial.print(getActualTime());
     delay(secsToMillis(captureFrequency_workDetected));
   } while ((getActualTime() - startTime) <= (((uint32_t) minsToSecs(workTime)) - early_work));
 

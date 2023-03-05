@@ -122,7 +122,7 @@ while True:
         img_array = np.array(Image.fromarray(img_array, "L"))
         clock = time.strftime("%H_%M_%S", time.localtime())
         cv2.imwrite("./temp/" + clock + ".png", img_array)
-        result = DETECTED_COMMAND
+        result = NOT_DETECTED_COMMAND
         ser.write(result)
         # Clear the buffer
         buffer = bytearray()

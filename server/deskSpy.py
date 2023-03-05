@@ -14,7 +14,7 @@ import win32api
 PRINT = True
 
 # If the image is to be displayed when received
-DISPLAY = True
+DISPLAY = False
 
 # If the terminal and the camera display are TOPMOST over other windows
 TOPMOST = False
@@ -28,6 +28,7 @@ WIDTH = 160
 HEIGHT = 120
 
 START_COMMAND = b"\x00"
+RESET_COMMAND = b"1"
 DETECTED_COMMAND = b"2"
 RECOGNIZED_COMMAND = DETECTED_COMMAND
 NOT_DETECTED_COMMAND = b"3"
@@ -41,7 +42,7 @@ def printTerminal(string):
 
 
 def terminationHandler(signum, frame):
-    ser.write(b"2")  # Reset
+    ser.write(RESET_COMMAND)
     printTerminal("-- EXIT --")
     exit(1)
 
@@ -115,7 +116,7 @@ while True:
         # Convert the array to a grayscale image
         img_array = np.array(Image.fromarray(img_array, "L"))
         if DISPLAY:
-            cv2.namedWindow("camera", cv2.WINDOW_NORMAL)
+            cv2.namedWindow("camera", cv2.WINDOW_AUTOSIZE)
             if TOPMOST:
                 cv2.setWindowProperty("camera", cv2.WND_PROP_TOPMOST, 1)
             cv2.imshow("camera", img_array)

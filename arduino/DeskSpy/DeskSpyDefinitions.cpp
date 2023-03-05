@@ -14,10 +14,15 @@ CameraOV7670 camera;
 
 uint32_t previous_time = 0;
 
+char byteRead[1];
+int ret;
+
 // --------------------------------------------------------------------------------
 
 void initialize() {
   Serial.begin(baud);
+  while(!Serial);
+  Serial.setTimeout(10000); // 10 seconds
   camera.init();
   clock.begin(); // Initialize DS3231
 }
@@ -60,6 +65,7 @@ void takeAndSendFrame() {
   }
   interrupts();
   waitUntilPreviousUartByteIsSent();
+  Serial.flush();
 }
 
 void waitUntilPreviousUartByteIsSent() {
@@ -82,7 +88,9 @@ void reset() {
   // Sync with server
   Serial.write("s");
   // Wait the Ack
-  while(!Serial.available() && Serial.read() != "a");
+  turnOn(led_warning);
+  while(Serial.read() != 'a');
+  turnOff(led_warning);
 }
 
 // --------------------------------------------------------------------------------
@@ -90,7 +98,7 @@ void reset() {
 
 uint32_t getActualTime() {
   uint32_t actual_time = clock.getDateTime().unixtime;
-  if((actual_time - previous_time) >= 60) { // if RTC clock is over, due to a probable error
+  if(((actual_time - previous_time) >= 100) && (previous_time != 0)) { // this prevents RTC errors
     return previous_time;
   }
   previous_time = actual_time;
@@ -104,21 +112,25 @@ unsigned long minsToSecs(int mins) { return ((unsigned long) mins) * 60L; }
 unsigned long secsToMillis(int secs) { return ((unsigned long) secs) * 1000L; }
 
 // Serial read blocking, to sync with the server
-// WARNING: it may cause deadlock!
-int serialReadBlocking() {
-  Serial.setTimeout(30000); // 30 seconds
-  char byteRead[1];
-  int ret = Serial.readBytes(byteRead, 1);
+char serialReadBlocking() {
+  /*
+  // WARNING: it may cause deadlock!
+  Serial.setTimeout(10000); // 10 seconds
+  delay(100); // wait 1 second to set up the timer
+  ret = 0;
+  byteRead[0] = '0';
+  ret = Serial.readBytes(byteRead, 1);
   if (ret == 0) {
-    return 0;
+    return '0';
   } else {
     return byteRead[0];
+  }*/
+  delay(500);
+  if (Serial.available() > 0) {
+    return Serial.read();
+  } else {
+    return '0';
   }
-  /*uint32_t startTime = getActualTime();
-  while((!Serial.available()) && (getActualTime() - startTime <= 30));
-  return Serial.read();*/
-  /*while(!Serial.available());
-  return Serial.read();*/
 }
 
 // Clear the receive buffer

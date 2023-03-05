@@ -19,10 +19,10 @@
 #ifdef DS_DEBUG
 
   #define prepareForWorkTime 5 //seconds
-  #define workTime 2 //minutes
+  #define workTime 8 //minutes
 
   #define prepareForBreakTime 5 //seconds
-  #define breakTime 1 //minutes
+  #define breakTime 4 //minutes
   
   #define snoozeTime 1 //minutes
   #define snoozeAvailableTimes 2 //Number of times the user can snooze before breakState
@@ -30,7 +30,7 @@
   #define maxAbsenceTime 1 //minutes. Max absence from work before an early break
   #define maxPresenceTime 1 //minutes. Max presence during break before an early work
   
-  #define captureFrequency_workDetected 10 //seconds
+  #define captureFrequency_workDetected 60 //seconds
   #define captureFrequency_workNotDetected 3 //seconds
   
   #define captureFrequency_breakNotDetected 5 //seconds
@@ -50,7 +50,7 @@
   #define maxAbsenceTime 5  //minutes. Max absence from work before an early break
   #define maxPresenceTime 5 //minutes. Max presence during break before an early work
   
-  #define captureFrequency_workDetected 10 //seconds
+  #define captureFrequency_workDetected 60 //seconds
   #define captureFrequency_workNotDetected 3 //seconds
   
   #define captureFrequency_breakNotDetected 5 //seconds
@@ -84,7 +84,7 @@ unsigned long minsToMillis(int mins);
 unsigned long minsToSecs(int mins);
 unsigned long secsToMillis(int secs);
 
-int serialReadBlocking();
+char serialReadBlocking();
 
 void clearReciveBuffer();
 
