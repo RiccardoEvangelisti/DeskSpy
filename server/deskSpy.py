@@ -46,6 +46,9 @@ def terminationHandler(signum, frame):
     printTerminal("-- EXIT --")
     exit(1)
 
+def getClock():
+    return time.strftime("%H:%M:%S", time.localtime())
+
 
 signal.signal(signal.SIGINT, terminationHandler)
 
@@ -56,7 +59,13 @@ if PRINT:
     screen_width = win32api.GetSystemMetrics(0)
     screen_height = win32api.GetSystemMetrics(1)
     win32gui.SetWindowPos(
-        hwnd, win32con.HWND_TOPMOST if TOPMOST else win32con.HWND_TOP, screen_width - width - 50, 300, width, height, 0
+        hwnd,
+        win32con.HWND_TOPMOST if TOPMOST else win32con.HWND_TOP,
+        screen_width - width - 50,
+        300,
+        width,
+        height,
+        0,
     )
     os.system("title DeskSpy")
     os.system("mode con: cols=30 lines=10")
@@ -89,10 +98,11 @@ with open("labels.pickle", "rb") as f:
 
 # Local buffer
 buffer = bytearray()
-result = -1
+result = b'-1'
+ID = ""
 
 # Wait the Syn from the client
-while ser.read(1) != b's':
+while ser.read(1) != b"s":
     pass
 # Send the Ack
 ser.write(b"a")
@@ -107,6 +117,9 @@ while byte != START_COMMAND:
 
 while True:
     if byte == START_COMMAND:
+        # Clear the buffer
+        buffer = bytearray()
+        result = b'-1'
         # Read one frame
         for i in range(WIDTH * HEIGHT):
             byte = ser.read(1)
@@ -125,7 +138,7 @@ while True:
         faces = face_detector.detectMultiScale(
             img_array, scaleFactor=1.05, minNeighbors=3
         )
-        clock = time.strftime("%H:%M:%S", time.localtime())
+        clock = getClock()
         if len(faces) > 0:
             if RECOGNITION:
                 # Recognize the faces in trained data
@@ -148,8 +161,11 @@ while True:
             printTerminal(clock + " No face detected")
             result = NOT_DETECTED_COMMAND
         ser.write(result)
-        # Clear the buffer
-        buffer = bytearray()
-        result = -1
     # Read next byte
+    printTerminal(getClock() + " Just about to read(1)")
     byte = ser.read(1)
+    printTerminal("Received byte: " + str(byte))
+    while byte == b'':
+        printTerminal(getClock() + " SERVER TIMEOUT: resending...")
+        ser.write(result)
+        byte = ser.read(1)

@@ -15,14 +15,14 @@
 
 // --------------------------------------------------------------------------------
 // Time constants
-//#define DS_DEBUG 1
+#define DS_DEBUG 1
 #ifdef DS_DEBUG
 
   #define prepareForWorkTime 5 //seconds
-  #define workTime 8 //minutes
+  #define workTime 5 //minutes
 
   #define prepareForBreakTime 5 //seconds
-  #define breakTime 4 //minutes
+  #define breakTime 5 //minutes
   
   #define snoozeTime 1 //minutes
   #define snoozeAvailableTimes 2 //Number of times the user can snooze before breakState
@@ -30,7 +30,7 @@
   #define maxAbsenceTime 1 //minutes. Max absence from work before an early break
   #define maxPresenceTime 1 //minutes. Max presence during break before an early work
   
-  #define captureFrequency_workDetected 60 //seconds
+  #define captureFrequency_workDetected 10 //seconds
   #define captureFrequency_workNotDetected 3 //seconds
   
   #define captureFrequency_breakNotDetected 5 //seconds

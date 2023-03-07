@@ -97,12 +97,20 @@ void reset() {
 // Utility funcions
 
 uint32_t getActualTime() {
-  uint32_t actual_time = clock.getDateTime().unixtime;
-  if(((actual_time - previous_time) >= 100) && (previous_time != 0)) { // this prevents RTC errors
-    return previous_time;
+  /*uint32_t actual_time = clock.getDateTime().unixtime;
+  if (((actual_time - previous_time) >= (frequencyCapture +10)) && (previous_time != 0)) { // this prevents RTC errors
+    previous_time = previous_time + frequencyCapture;
+  } else {
+    previous_time = actual_time;
   }
-  previous_time = actual_time;
-  return previous_time;
+  return previous_time;*/
+  uint32_t actual_time1;
+  uint32_t actual_time2;
+  do {
+    actual_time1 = clock.getDateTime().unixtime;
+    actual_time2 = clock.getDateTime().unixtime;
+  } while (actual_time2 - actual_time1 > 100);
+  return actual_time2;
 }
 
 unsigned long minsToMillis(int mins) { return ((unsigned long) mins) * 60L * 1000L; }
@@ -111,7 +119,7 @@ unsigned long minsToSecs(int mins) { return ((unsigned long) mins) * 60L; }
 
 unsigned long secsToMillis(int secs) { return ((unsigned long) secs) * 1000L; }
 
-// Serial read blocking, to sync with the server
+// Serial read, to sync with the server
 char serialReadBlocking() {
   /*
   // WARNING: it may cause deadlock!
