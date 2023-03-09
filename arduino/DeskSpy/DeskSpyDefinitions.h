@@ -15,7 +15,7 @@
 
 // --------------------------------------------------------------------------------
 // Time constants
-#define DS_DEBUG 1
+//#define DS_DEBUG 1
 #ifdef DS_DEBUG
 
   #define prepareForWorkTime 5 //seconds

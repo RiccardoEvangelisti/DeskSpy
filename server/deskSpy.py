@@ -1,4 +1,5 @@
 import serial
+import logging
 import numpy as np
 from PIL import Image
 import cv2
@@ -13,11 +14,14 @@ import win32api
 # If the output prints are to be displayed in terminal
 PRINT = True
 
+# Enables the logger
+LOGGER = True
+
 # If the image is to be displayed when received
 DISPLAY = False
 
 # If the terminal and the camera display are TOPMOST over other windows
-TOPMOST = False
+TOPMOST = True
 
 # If the user's face is to be recognized or only detected
 RECOGNITION = True
@@ -39,6 +43,8 @@ NOT_RECOGNIZED_COMMAND = NOT_DETECTED_COMMAND
 def printTerminal(string):
     if PRINT:
         print(string)
+        if LOGGER:
+            logging.info(string)
 
 
 def terminationHandler(signum, frame):
@@ -46,9 +52,19 @@ def terminationHandler(signum, frame):
     printTerminal("-- EXIT --")
     exit(1)
 
+
 def getClock():
     return time.strftime("%H:%M:%S", time.localtime())
 
+
+# Create and configure logger
+logging.basicConfig(
+    filename="log.log",
+    format="%(message)s",
+    encoding="utf-8",
+    level=logging.DEBUG,
+    filemode="w",
+)
 
 signal.signal(signal.SIGINT, terminationHandler)
 
@@ -62,7 +78,7 @@ if PRINT:
         hwnd,
         win32con.HWND_TOPMOST if TOPMOST else win32con.HWND_TOP,
         screen_width - width - 50,
-        300,
+        100,
         width,
         height,
         0,
@@ -98,7 +114,7 @@ with open("labels.pickle", "rb") as f:
 
 # Local buffer
 buffer = bytearray()
-result = b'-1'
+result = b"-1"
 ID = ""
 
 # Wait the Syn from the client
@@ -118,8 +134,9 @@ while byte != START_COMMAND:
 while True:
     if byte == START_COMMAND:
         # Clear the buffer
+        ser.reset_output_buffer()
         buffer = bytearray()
-        result = b'-1'
+        result = b"-1"
         # Read one frame
         for i in range(WIDTH * HEIGHT):
             byte = ser.read(1)
@@ -129,7 +146,7 @@ while True:
         # Convert the array to a grayscale image
         img_array = np.array(Image.fromarray(img_array, "L"))
         if DISPLAY:
-            cv2.namedWindow("camera", cv2.WINDOW_AUTOSIZE)
+            cv2.namedWindow("camera", cv2.WINDOW_NORMAL)
             if TOPMOST:
                 cv2.setWindowProperty("camera", cv2.WND_PROP_TOPMOST, 1)
             cv2.imshow("camera", img_array)
@@ -162,9 +179,7 @@ while True:
             result = NOT_DETECTED_COMMAND
         ser.write(result)
     # Read next byte
-    printTerminal(getClock() + " Just about to read(1)")
     byte = ser.read(1)
-    printTerminal("Received byte: " + str(byte))
     while byte == b'':
         printTerminal(getClock() + " SERVER TIMEOUT: resending...")
         ser.write(result)
