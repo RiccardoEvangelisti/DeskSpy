@@ -87,6 +87,7 @@ void reset() {
   clearReciveBuffer();
   // Sync with server
   Serial.write("s");
+  Serial.flush();
   // Wait the Ack
   turnOn(led_warning);
   while(Serial.read() != 'a');
@@ -109,7 +110,7 @@ uint32_t getActualTime() {
   do {
     actual_time1 = clock.getDateTime().unixtime;
     actual_time2 = clock.getDateTime().unixtime;
-  } while (actual_time2 - actual_time1 > 100);
+  } while (actual_time2 - actual_time1 > 10);
   return actual_time2;
 }
 
